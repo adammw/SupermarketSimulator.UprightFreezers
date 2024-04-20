@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.002.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UprightFreezers", "UprightFreezers.csproj", "{81284F25-25FF-4E12-9221-BB45F2F047E1}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{81284F25-25FF-4E12-9221-BB45F2F047E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{81284F25-25FF-4E12-9221-BB45F2F047E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{81284F25-25FF-4E12-9221-BB45F2F047E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{81284F25-25FF-4E12-9221-BB45F2F047E1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {18EEA29A-4456-4592-9A55-113A2B1EDC73}
+	EndGlobalSection
+EndGlobal
