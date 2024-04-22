@@ -66,6 +66,7 @@ namespace UprightFreezers
             
             //display.m_Type = DisplayType.FREEZER;
             typeof(global::Display).GetField("m_Type", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(freezerADisplay, DisplayType.FREEZER);
+            typeof(global::Display).GetField("m_ID", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(freezerADisplay, STANDING_FREEZER_A_ID);
 
             freezerA.FurniturePrefab = freezerAGameObject;
             m_Displays.Add(freezerA);
@@ -90,6 +91,7 @@ namespace UprightFreezers
 
             //display.m_Type = DisplayType.FREEZER;
             typeof(global::Display).GetField("m_Type", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(freezerBDisplay, DisplayType.FREEZER);
+            typeof(global::Display).GetField("m_ID", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(freezerBDisplay, STANDING_FREEZER_B_ID);
 
             freezerB.FurniturePrefab = freezerBGameObject;
 
