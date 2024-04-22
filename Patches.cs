@@ -55,7 +55,7 @@ namespace UprightFreezers
             freezerA.BoxSize = fridgeA.BoxSize;
             freezerA.DisplayType = DisplayType.FREEZER;
             freezerA.FurnitureIcon = fridgeA.FurnitureIcon;
-            freezerA.Cost = 600f;
+            freezerA.Cost = Plugin.freezerACost.Value;
 
             GameObject freezerAGameObject = Object.Instantiate(fridgeA.FurniturePrefab);
             freezerAGameObject.SetActive(false);
@@ -82,7 +82,7 @@ namespace UprightFreezers
             freezerB.BoxSize = fridgeB.BoxSize;
             freezerB.DisplayType = DisplayType.FREEZER;
             freezerB.FurnitureIcon = fridgeB.FurnitureIcon;
-            freezerB.Cost = 1200f;
+            freezerB.Cost = Plugin.freezerBCost.Value;
 
             GameObject freezerBGameObject = Object.Instantiate(fridgeB.FurniturePrefab);
             freezerBGameObject.SetActive(false);
