@@ -1,7 +1,11 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+using System.IO;
 using System.Reflection;
+using System.Runtime.InteropServices.ComTypes;
+using UnityEngine;
+using UnityEngine.Localization.PropertyVariants.TrackedProperties;
 
 namespace UprightFreezers
 {
@@ -18,6 +22,20 @@ namespace UprightFreezers
             Harmony.DEBUG = true;
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly());
             Plugin.Log = Logger;
+        }
+
+        public static Texture2D LoadTexture(string resourceName)
+        {
+            Texture2D texture = new Texture2D(2, 2, TextureFormat.ARGB32, false);
+            Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("UprightFreezers.Resources." + resourceName + ".png");
+            if (stream == null) {
+                Log.LogError("Texture not found");
+                return texture;
+            }
+            byte[] imageData = new byte[stream.Length];
+            stream.Read(imageData);
+            texture.LoadImage(imageData);
+            return texture;
         }
     }
 }

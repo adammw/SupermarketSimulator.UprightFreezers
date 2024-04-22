@@ -60,6 +60,8 @@ namespace UprightFreezers
             GameObject freezerAGameObject = Object.Instantiate(fridgeA.FurniturePrefab);
             freezerAGameObject.SetActive(false);
             freezerAGameObject.name = "FreezerA";
+            Renderer freezerARenderer = freezerAGameObject.transform.Find("Visuals/Fridge_f13xen").GetComponent<Renderer>();
+            freezerARenderer.material.mainTexture = Plugin.LoadTexture("FreezerA");
 
             global::Display freezerADisplay = freezerAGameObject.GetComponent<global::Display>();
             freezerADisplay.Data.FurnitureID = STANDING_FREEZER_A_ID;
@@ -85,6 +87,8 @@ namespace UprightFreezers
             GameObject freezerBGameObject = Object.Instantiate(fridgeB.FurniturePrefab);
             freezerBGameObject.SetActive(false);
             freezerBGameObject.name = "FreezerB";
+            Renderer freezerBRenderer = freezerBGameObject.transform.Find("Visuals/Fridge_4ttiif").GetComponent<Renderer>();
+            freezerBRenderer.material.mainTexture = Plugin.LoadTexture("FreezerB");
 
             global::Display freezerBDisplay = freezerBGameObject.GetComponent<global::Display>();
             freezerBDisplay.Data.FurnitureID = STANDING_FREEZER_B_ID;

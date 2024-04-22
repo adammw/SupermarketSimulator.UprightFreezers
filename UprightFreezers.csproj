@@ -31,4 +31,9 @@
       <HintPath>D:\SteamLibrary\steamapps\common\Supermarket Simulator\Supermarket Simulator_Data\Managed\Unity.Localization.dll</HintPath>
     </Reference>
   </ItemGroup>
+  
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\FreezerA.png" />
+    <EmbeddedResource Include="Resources\FreezerB.png" />
+  </ItemGroup>
 </Project>
