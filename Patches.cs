@@ -16,10 +16,11 @@ namespace UprightFreezers
         public const int STANDING_FREEZER_B_ID = 542202;
 
         [HarmonyPrefix]
-        [HarmonyPatch(typeof(IDManager), "FurnitureSO")]
-        public static void Postfix(int id)
+        [HarmonyPatch(typeof(IDManager), "Furnitures", MethodType.Getter)]
+        public static void Prefix()
         {
-            bool isPatched = Singleton<IDManager>.Instance.Furnitures.FindIndex(furniture => furniture.ID == STANDING_FREEZER_A_ID) != -1;
+            List<FurnitureSO> m_Furnitures = typeof(IDManager).GetField("m_Furnitures", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(Singleton<IDManager>.Instance) as List<FurnitureSO>;
+            bool isPatched = m_Furnitures.FindIndex(furniture => furniture.ID == STANDING_FREEZER_A_ID) != -1;
 
             if (!isPatched)
             {
@@ -28,24 +29,25 @@ namespace UprightFreezers
             }
         }
 
-        [HarmonyPostfix]
-        [HarmonyPatch(typeof(LocalizationManager), "UpdateLocalization")]
-        public static void UpdateLocalizations(ref Dictionary<int, string> ___m_LocalizedFurnitureNames)
-        {
-            ___m_LocalizedFurnitureNames[STANDING_FREEZER_A_ID] = "Freezer A";
-            ___m_LocalizedFurnitureNames[STANDING_FREEZER_B_ID] = "Freezer B";
-        }
-
         private static void AddCustomObjects()
         {
+            IDManager idManager = Singleton<IDManager>.Instance;
+
             // Get access to private fields
-            //Singleton<IDManager>.Instance.m_Display
-            List<DisplaySO> m_Displays = typeof(IDManager).GetField("m_Displays", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(Singleton<IDManager>.Instance) as List<DisplaySO>;
+            List<DisplaySO> m_Displays = typeof(IDManager).GetField("m_Displays", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(idManager) as List<DisplaySO>;
+            List<FurnitureSO> m_Furnitures = typeof(IDManager).GetField("m_Furnitures", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(idManager) as List<FurnitureSO>;
 
             // Fetch base game objects
             DisplaySO fridgeA = m_Displays.Find(displaySO => displaySO.ID == FRIDGE_A_ID);
             DisplaySO fridgeB = m_Displays.Find(displaySO => displaySO.ID == FRIDGE_B_ID);
             DisplaySO freezer = m_Displays.Find(displaySO => displaySO.ID == FREEZER_ID);
+
+            if (fridgeA == null || fridgeB == null || freezer == null)
+            {
+                
+                Plugin.Log.LogError("Base game objects not found");
+                return;
+            }
 
             // Create custom Freezer A
             DisplaySO freezerA = ScriptableObject.CreateInstance<DisplaySO>();
@@ -54,13 +56,16 @@ namespace UprightFreezers
             freezerA.ID = STANDING_FREEZER_A_ID;
             freezerA.BoxSize = fridgeA.BoxSize;
             freezerA.DisplayType = DisplayType.FREEZER;
-            freezerA.FurnitureIcon = fridgeA.FurnitureIcon;
+            freezerA.FurnitureIcon = fridgeA.FurnitureIcon; // TODO - load custom icon, orig is Fridge_Single 
+            freezerA.AtlasIndex = fridgeA.AtlasIndex; // Atlas icons are used by ProductAtlasManager#SetFurnitureIcon
+            freezerA.AtlasPosition = fridgeA.AtlasPosition;
             freezerA.Cost = Plugin.freezerACost.Value;
+            freezerA.IsMainFurniture = true;
 
             GameObject freezerAGameObject = Object.Instantiate(fridgeA.FurniturePrefab);
             freezerAGameObject.SetActive(false);
             freezerAGameObject.name = "FreezerA";
-            Renderer freezerARenderer = freezerAGameObject.transform.Find("Visuals/Fridge_f13xen").GetComponent<Renderer>();
+            Renderer freezerARenderer = freezerAGameObject.transform.Find("Visuals/SM_Fridge_Single/SM_Fridge_Single_2").GetComponent<Renderer>();
             freezerARenderer.material.mainTexture = Plugin.LoadTexture("FreezerA");
 
             global::Display freezerADisplay = freezerAGameObject.GetComponent<global::Display>();
@@ -72,7 +77,7 @@ namespace UprightFreezers
 
             freezerA.FurniturePrefab = freezerAGameObject;
             m_Displays.Add(freezerA);
-            Singleton<IDManager>.Instance.Furnitures.Add(freezerA);
+            m_Furnitures.Add(freezerA);
 
             // Create custom Freezer B
             DisplaySO freezerB = ScriptableObject.CreateInstance<DisplaySO>();
@@ -81,14 +86,17 @@ namespace UprightFreezers
             freezerB.ID = STANDING_FREEZER_B_ID;
             freezerB.BoxSize = fridgeB.BoxSize;
             freezerB.DisplayType = DisplayType.FREEZER;
-            freezerB.FurnitureIcon = fridgeB.FurnitureIcon;
+            freezerB.FurnitureIcon = fridgeB.FurnitureIcon; // TODO - load custom icon, orig is Fridge_Double 
+            freezerB.AtlasIndex = fridgeB.AtlasIndex; // Atlas icons are used by ProductAtlasManager#SetFurnitureIcon
+            freezerB.AtlasPosition = fridgeB.AtlasPosition;
             freezerB.Cost = Plugin.freezerBCost.Value;
+            freezerB.IsMainFurniture = true;
 
             GameObject freezerBGameObject = Object.Instantiate(fridgeB.FurniturePrefab);
             freezerBGameObject.SetActive(false);
             freezerBGameObject.name = "FreezerB";
-            Renderer freezerBRenderer = freezerBGameObject.transform.Find("Visuals/Fridge_4ttiif").GetComponent<Renderer>();
-            freezerBRenderer.material.mainTexture = Plugin.LoadTexture("FreezerB");
+            Renderer freezerBRenderer = freezerBGameObject.transform.Find("Visuals/SM_Fridge_Double/SM_Fridge_Double_2").GetComponent<Renderer>();
+            freezerBRenderer.material.mainTexture = Plugin.LoadTexture("FreezerA");
 
             global::Display freezerBDisplay = freezerBGameObject.GetComponent<global::Display>();
             freezerBDisplay.Data.FurnitureID = STANDING_FREEZER_B_ID;
@@ -100,11 +108,7 @@ namespace UprightFreezers
             freezerB.FurniturePrefab = freezerBGameObject;
 
             m_Displays.Add(freezerB);
-            Singleton<IDManager>.Instance.Furnitures.Add(freezerB);
-
-            // Trigger update localizations
-            Dictionary<int, string> m_LocalizedFurnitureNames = typeof(LocalizationManager).GetField("m_LocalizedFurnitureNames", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(Singleton<LocalizationManager>.Instance) as Dictionary<int, string>;
-            UpdateLocalizations(ref m_LocalizedFurnitureNames);
+            m_Furnitures.Add(freezerB);
         }
     }
 }
