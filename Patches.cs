@@ -19,96 +19,95 @@ namespace UprightFreezers
         [HarmonyPatch(typeof(IDManager), "Furnitures", MethodType.Getter)]
         public static void Prefix()
         {
-            List<FurnitureSO> m_Furnitures = typeof(IDManager).GetField("m_Furnitures", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(Singleton<IDManager>.Instance) as List<FurnitureSO>;
-            bool isPatched = m_Furnitures.FindIndex(furniture => furniture.ID == STANDING_FREEZER_A_ID) != -1;
-
-            if (!isPatched)
+            try
             {
-                AddCustomObjects();
-                Plugin.Log.LogInfo("Custom objects added");
+                Traverse idManagerTraverse = Traverse.Create(Singleton<IDManager>.Instance);
+
+                List<DisplaySO> m_Displays = idManagerTraverse.Field("m_Displays").GetValue<List<DisplaySO>>();
+                List<FurnitureSO> m_Furnitures = idManagerTraverse.Field("m_Furnitures").GetValue<List<FurnitureSO>>();
+                bool isPatched = m_Furnitures.FindIndex(furniture => furniture.ID == STANDING_FREEZER_A_ID) != -1;
+
+                if (!isPatched)
+                {
+                    DisplaySO fridgeA = m_Displays.Find(displaySO => displaySO.ID == FRIDGE_A_ID);
+                    DisplaySO fridgeB = m_Displays.Find(displaySO => displaySO.ID == FRIDGE_B_ID);
+                    BuildFreezer(name: "FreezerA", id: STANDING_FREEZER_A_ID, baseDisplay: fridgeA, cost: Plugin.freezerACost.Value, customVisuals: Plugin.customVisualsA.Value, signTexturePath: Plugin.signTextureA.Value);
+                    BuildFreezer(name: "FreezerB", id: STANDING_FREEZER_B_ID, baseDisplay: fridgeB, cost: Plugin.freezerBCost.Value, customVisuals: Plugin.customVisualsB.Value, signTexturePath: Plugin.signTextureB.Value);
+                    Plugin.Log.LogInfo("Custom objects added");
+                }
+            }
+            catch (System.Exception e)
+            {
+                Plugin.Log.LogError(e);
             }
         }
 
-        private static void AddCustomObjects()
+        public static void BuildFreezer(string name, int id, DisplaySO baseDisplay, float cost, bool customVisuals, string signTexturePath)
         {
-            IDManager idManager = Singleton<IDManager>.Instance;
-
             // Get access to private fields
-            List<DisplaySO> m_Displays = typeof(IDManager).GetField("m_Displays", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(idManager) as List<DisplaySO>;
-            List<FurnitureSO> m_Furnitures = typeof(IDManager).GetField("m_Furnitures", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(idManager) as List<FurnitureSO>;
+            Traverse idManagerTraverse = Traverse.Create(Singleton<IDManager>.Instance);
+            List<DisplaySO> m_Displays = idManagerTraverse.Field("m_Displays").GetValue<List<DisplaySO>>();
+            List<FurnitureSO> m_Furnitures = idManagerTraverse.Field("m_Furnitures").GetValue<List<FurnitureSO>>();
 
-            // Fetch base game objects
-            DisplaySO fridgeA = m_Displays.Find(displaySO => displaySO.ID == FRIDGE_A_ID);
-            DisplaySO fridgeB = m_Displays.Find(displaySO => displaySO.ID == FRIDGE_B_ID);
+            // Fetch base game freezer
             DisplaySO freezer = m_Displays.Find(displaySO => displaySO.ID == FREEZER_ID);
 
-            if (fridgeA == null || fridgeB == null || freezer == null)
+            // Create custom Freezer
+            DisplaySO customFreezer = ScriptableObject.CreateInstance<DisplaySO>();
+            customFreezer.name = name;
+            customFreezer.LocalizedName = freezer.LocalizedName; // TODO - how to localize?
+            customFreezer.ID = id;
+            customFreezer.BoxSize = baseDisplay.BoxSize;
+            customFreezer.DisplayType = DisplayType.FREEZER;
+            customFreezer.FurnitureIcon = baseDisplay.FurnitureIcon; // TODO - load custom icon, orig is Fridge_Double 
+            customFreezer.AtlasIndex = baseDisplay.AtlasIndex; // Atlas icons are used by ProductAtlasManager#SetFurnitureIcon
+            customFreezer.AtlasPosition = baseDisplay.AtlasPosition;
+            customFreezer.Cost = Plugin.freezerBCost.Value;
+            customFreezer.IsMainFurniture = true;
+
+            // Create custom prefab
+            GameObject prefab = Object.Instantiate(baseDisplay.FurniturePrefab);
+            prefab.SetActive(false);
+            prefab.name = name;
+
+            // Add custom visuals
+            if (customVisuals)
             {
-                
-                Plugin.Log.LogError("Base game objects not found");
-                return;
+                Transform visuals = prefab.transform.Find("Visuals");
+                Transform mainMesh = visuals.GetChild(0).GetChild(1);
+                Material mainMeshMaterial = mainMesh.GetComponent<Renderer>().material;
+                // override default texture to be transparent for sign area
+                mainMeshMaterial.mainTexture = Plugin.LoadTextureFromResource("TrimSheet_Fridges&Freezers");
+
+                // create a new object to show our custom sign
+                Texture2D signBg = (signTexturePath.IsNullOrEmpty()) ? Plugin.LoadTextureFromResource("SignBg") : Plugin.LoadTextureFromFile(signTexturePath);
+                GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
+                plane.transform.localPosition = new Vector3(0, 1.88f, 0.298f);
+                plane.transform.localRotation = Quaternion.Euler(90, 0, 0);
+                plane.transform.localScale = new Vector3(0.12f, 0.1f, 0.024f);
+                plane.transform.SetParent(visuals);
+                plane.SetActive(true);
+                plane.GetComponent<Renderer>().material = Material.Instantiate(mainMeshMaterial);
+                plane.GetComponent<Renderer>().material.mainTexture = signBg;
+                plane.GetComponent<Renderer>().material.SetTexture("_MainTex", signBg);
+                plane.GetComponent<Renderer>().material.SetTexture("_EmissionMap", Plugin.LoadTextureFromResource("SignEmissive"));
+                plane.GetComponent<Renderer>().material.SetTexture("_BumpMap", null);
+                plane.GetComponent<Renderer>().material.SetTexture("_MetallicGlossMap", Texture2D.blackTexture);
             }
 
-            // Create custom Freezer A
-            DisplaySO freezerA = ScriptableObject.CreateInstance<DisplaySO>();
-            freezerA.name = "FreezerA";
-            freezerA.LocalizedName = freezer.LocalizedName; // TODO - how to localize?
-            freezerA.ID = STANDING_FREEZER_A_ID;
-            freezerA.BoxSize = fridgeA.BoxSize;
-            freezerA.DisplayType = DisplayType.FREEZER;
-            freezerA.FurnitureIcon = fridgeA.FurnitureIcon; // TODO - load custom icon, orig is Fridge_Single 
-            freezerA.AtlasIndex = fridgeA.AtlasIndex; // Atlas icons are used by ProductAtlasManager#SetFurnitureIcon
-            freezerA.AtlasPosition = fridgeA.AtlasPosition;
-            freezerA.Cost = Plugin.freezerACost.Value;
-            freezerA.IsMainFurniture = true;
+            // Set custom prefab display data
+            global::Display freezerBDisplay = prefab.GetComponent<global::Display>();
+            freezerBDisplay.Data.FurnitureID = id;
+            Traverse displayTraverse = Traverse.Create(freezerBDisplay);
+            displayTraverse.Field("m_Type").SetValue(DisplayType.FREEZER);
+            displayTraverse.Field("m_ID").SetValue(id);
 
-            GameObject freezerAGameObject = Object.Instantiate(fridgeA.FurniturePrefab);
-            freezerAGameObject.SetActive(false);
-            freezerAGameObject.name = "FreezerA";
-            Renderer freezerARenderer = freezerAGameObject.transform.Find("Visuals/SM_Fridge_Single/SM_Fridge_Single_2").GetComponent<Renderer>();
-            freezerARenderer.material.mainTexture = Plugin.LoadTexture("FreezerA");
+            customFreezer.FurniturePrefab = prefab;
 
-            global::Display freezerADisplay = freezerAGameObject.GetComponent<global::Display>();
-            freezerADisplay.Data.FurnitureID = STANDING_FREEZER_A_ID;
-            
-            //display.m_Type = DisplayType.FREEZER;
-            typeof(global::Display).GetField("m_Type", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(freezerADisplay, DisplayType.FREEZER);
-            typeof(global::Display).GetField("m_ID", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(freezerADisplay, STANDING_FREEZER_A_ID);
-
-            freezerA.FurniturePrefab = freezerAGameObject;
-            m_Displays.Add(freezerA);
-            m_Furnitures.Add(freezerA);
-
-            // Create custom Freezer B
-            DisplaySO freezerB = ScriptableObject.CreateInstance<DisplaySO>();
-            freezerB.name = "FreezerB";
-            freezerB.LocalizedName = freezer.LocalizedName; // TODO - how to localize?
-            freezerB.ID = STANDING_FREEZER_B_ID;
-            freezerB.BoxSize = fridgeB.BoxSize;
-            freezerB.DisplayType = DisplayType.FREEZER;
-            freezerB.FurnitureIcon = fridgeB.FurnitureIcon; // TODO - load custom icon, orig is Fridge_Double 
-            freezerB.AtlasIndex = fridgeB.AtlasIndex; // Atlas icons are used by ProductAtlasManager#SetFurnitureIcon
-            freezerB.AtlasPosition = fridgeB.AtlasPosition;
-            freezerB.Cost = Plugin.freezerBCost.Value;
-            freezerB.IsMainFurniture = true;
-
-            GameObject freezerBGameObject = Object.Instantiate(fridgeB.FurniturePrefab);
-            freezerBGameObject.SetActive(false);
-            freezerBGameObject.name = "FreezerB";
-            Renderer freezerBRenderer = freezerBGameObject.transform.Find("Visuals/SM_Fridge_Double/SM_Fridge_Double_2").GetComponent<Renderer>();
-            freezerBRenderer.material.mainTexture = Plugin.LoadTexture("FreezerA");
-
-            global::Display freezerBDisplay = freezerBGameObject.GetComponent<global::Display>();
-            freezerBDisplay.Data.FurnitureID = STANDING_FREEZER_B_ID;
-
-            //display.m_Type = DisplayType.FREEZER;
-            typeof(global::Display).GetField("m_Type", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(freezerBDisplay, DisplayType.FREEZER);
-            typeof(global::Display).GetField("m_ID", BindingFlags.NonPublic | BindingFlags.Instance).SetValue(freezerBDisplay, STANDING_FREEZER_B_ID);
-
-            freezerB.FurniturePrefab = freezerBGameObject;
-
-            m_Displays.Add(freezerB);
-            m_Furnitures.Add(freezerB);
+            // Append custom object to lists
+            m_Displays.Add(customFreezer);
+            m_Furnitures.Add(customFreezer);
         }
+
     }
 }
