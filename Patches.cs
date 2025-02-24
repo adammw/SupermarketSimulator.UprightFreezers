@@ -17,7 +17,7 @@ namespace UprightFreezers
 
         [HarmonyPrefix]
         [HarmonyPatch(typeof(IDManager), "Furnitures", MethodType.Getter)]
-        public static void Prefix()
+        public static void IDManager_Furnitures()
         {
             try
             {
@@ -41,6 +41,47 @@ namespace UprightFreezers
                 Plugin.Log.LogError(e);
             }
         }
+
+
+        [HarmonyPrefix]
+        [HarmonyPatch(typeof(DisplaySlot), "SpawnProduct")]
+        [HarmonyPatch(typeof(DisplaySlot), "AddProduct")]
+        public static void AddProduct_Prefix(DisplaySlot __instance, int productID, out GridLayout3D.GridLayout __state)
+        {
+            __state = null;
+
+            if (__instance.Display.ID == STANDING_FREEZER_A_ID || __instance.Display.ID == STANDING_FREEZER_B_ID)
+            {
+                ProductSO productSO = Singleton<IDManager>.Instance.ProductSO(productID);
+                if (productSO == null) return;
+
+                // save original GridLayoutInStorage
+                __state = new GridLayout3D.GridLayout(productSO.GridLayoutInStorage);
+
+                // override scale multiplier for this call
+                productSO.GridLayoutInStorage.spacing = Plugin.productScaleMultiplier.Value * productSO.GridLayoutInStorage.spacing;
+                productSO.GridLayoutInStorage.scaleMultiplier = Plugin.productScaleMultiplier.Value * productSO.GridLayoutInStorage.scaleMultiplier;
+
+            }
+        }
+
+        [HarmonyPostfix]
+        [HarmonyPatch(typeof(DisplaySlot), "SpawnProduct")]
+        [HarmonyPatch(typeof(DisplaySlot), "AddProduct")]
+        public static void AddProduct_Postfix(DisplaySlot __instance, int productID, GridLayout3D.GridLayout __state)
+        {
+            if (__instance.Display.ID == STANDING_FREEZER_A_ID || __instance.Display.ID == STANDING_FREEZER_B_ID)
+            {
+                ProductSO productSO = Singleton<IDManager>.Instance.ProductSO(productID);
+                if (productSO == null) return;
+
+                // restore original GridLayoutInStorage
+                if (__state != null)
+                    productSO.GridLayoutInStorage = __state;
+            }
+        }
+
+
 
         public static void BuildFreezer(string name, int id, DisplaySO baseDisplay, float cost, bool customVisuals, string signTexturePath)
         {

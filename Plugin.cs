@@ -19,6 +19,7 @@ namespace UprightFreezers
         public static ConfigEntry<bool> customVisualsB;
         public static ConfigEntry<string> signTextureA;
         public static ConfigEntry<string> signTextureB;
+        public static ConfigEntry<float> productScaleMultiplier;
 
         private void Awake()
         {
@@ -30,6 +31,7 @@ namespace UprightFreezers
 
             freezerACost = base.Config.Bind<float>("Cost", "FreezerA", 600f, "Cost of FREEZER A (1 wide)");
             freezerBCost = base.Config.Bind<float>("Cost", "FreezerB", 1200f, "Cost of FREEZER B (2 wide)");
+            productScaleMultiplier = base.Config.Bind<float>("Products", "ScaleMultiplier", 1.0f, "Product Scale Multiplier");
             customVisualsA = base.Config.Bind<bool>("Visuals", "FreezerACustomVisuals", true, "Enable custom visuals for FreezerA");
             customVisualsB = base.Config.Bind<bool>("Visuals", "FreezerBCustomVisuals", true, "Enable custom visuals for FreezerB");
             signTextureA = base.Config.Bind<string>("Visuals", "FreezerASignTexture", null, "Texture for the sign for FreezerA");
