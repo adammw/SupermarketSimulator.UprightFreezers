@@ -115,7 +115,8 @@ namespace UprightFreezers
             if (customVisuals)
             {
                 Transform visuals = prefab.transform.Find("Visuals");
-                Transform mainMesh = visuals.GetChild(0).GetChild(1);
+                Transform visualsChild = visuals.GetChild(0);
+                Transform mainMesh = visualsChild.GetChild(1);
                 Material mainMeshMaterial = mainMesh.GetComponent<Renderer>().material;
                 // override default texture to be transparent for sign area
                 mainMeshMaterial.mainTexture = Plugin.LoadTextureFromResource("TrimSheet_Fridges&Freezers");
@@ -123,10 +124,11 @@ namespace UprightFreezers
                 // create a new object to show our custom sign
                 Texture2D signBg = (signTexturePath.IsNullOrEmpty()) ? Plugin.LoadTextureFromResource("SignBg") : Plugin.LoadTextureFromFile(signTexturePath);
                 GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
+                plane.name = "Sign";
                 plane.transform.localPosition = new Vector3(0, 1.88f, 0.298f);
                 plane.transform.localRotation = Quaternion.Euler(90, 0, 0);
                 plane.transform.localScale = new Vector3(0.12f, 0.1f, 0.024f);
-                plane.transform.SetParent(visuals);
+                plane.transform.SetParent(visualsChild);
                 plane.SetActive(true);
                 plane.GetComponent<Renderer>().material = Material.Instantiate(mainMeshMaterial);
                 plane.GetComponent<Renderer>().material.mainTexture = signBg;
@@ -134,6 +136,10 @@ namespace UprightFreezers
                 plane.GetComponent<Renderer>().material.SetTexture("_EmissionMap", Plugin.LoadTextureFromResource("SignEmissive"));
                 plane.GetComponent<Renderer>().material.SetTexture("_BumpMap", null);
                 plane.GetComponent<Renderer>().material.SetTexture("_MetallicGlossMap", Texture2D.blackTexture);
+
+                // we don't want the sign to be collidable
+                plane.GetComponent<MeshCollider>().enabled = false;
+                Component.DestroyImmediate(plane.GetComponent<MeshCollider>());
             }
 
             // Set custom prefab display data
