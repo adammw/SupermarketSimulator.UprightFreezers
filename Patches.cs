@@ -122,12 +122,12 @@ namespace UprightFreezers
                 mainMeshMaterial.mainTexture = Plugin.LoadTextureFromResource("TrimSheet_Fridges&Freezers");
 
                 // create a new object to show our custom sign
-                Texture2D signBg = (signTexturePath.IsNullOrEmpty()) ? Plugin.LoadTextureFromResource("SignBg") : Plugin.LoadTextureFromFile(signTexturePath);
+                Texture2D signBg = (signTexturePath.IsNullOrEmpty()) ? Plugin.LoadTextureFromResource(name) : Plugin.LoadTextureFromFile(signTexturePath);
                 GameObject plane = GameObject.CreatePrimitive(PrimitiveType.Plane);
                 plane.name = "Sign";
                 plane.transform.localPosition = new Vector3(0, 1.88f, 0.298f);
                 plane.transform.localRotation = Quaternion.Euler(90, 0, 0);
-                plane.transform.localScale = new Vector3(0.12f, 0.1f, 0.024f);
+                plane.transform.localScale = new Vector3(name == "FreezerA" ? 0.06f : 0.12f, 0.1f, 0.024f);
                 plane.transform.SetParent(visualsChild);
                 plane.SetActive(true);
                 plane.GetComponent<Renderer>().material = Material.Instantiate(mainMeshMaterial);
